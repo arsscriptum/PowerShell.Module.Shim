@@ -8,14 +8,17 @@
 
 
 
-function Get-ShimGenExePath       
-{
+function Get-ShimGenExePath{
     [cmdletbinding()]
     Param()
-    $ShimGenExe=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
-    if(Test-Path $ShimGenExe){
-      return $ShimGenExe  
+    $Exists=Test-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
+    if($Exists){
+        $ShimGenExe=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
+        if(Test-Path $ShimGenExe){
+          return $ShimGenExe  
+        }    
     }
+    
     $Cmd =  Get-Command 'shimgen.exe' -ErrorAction Ignore
     if($Cmd -ne $null){
        $ShimGenExe = $Cmd.Source
