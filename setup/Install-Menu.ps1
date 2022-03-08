@@ -42,12 +42,14 @@ function Install-ContextualMenu{
         Write-ChannelMessage  "ContextualMenu Config"
         Write-ChannelMessage  "====================================="
         $RegistryPath = 'HKCR:\exefile\shell\addshim\command'
+        $RegistryPathDel = 'HKCR:\exefile\shell\delshim\command'
 
         $RootPath = (Resolve-Path "$PSScriptRoot\..").Path
         $BinPath = Join-Path $RootPath 'bin'
         $ImgPath = Join-Path $RootPath 'img'
         $IconPath = Join-Path $ImgPath 'AddShim.ico'
         $RunnerPath = Join-Path $BinPath 'Runner.exe'
+        $RemoveShimPath = Join-Path $BinPath 'RemoveShim.exe'
 
         Write-ChannelMessage  "RootPath $RootPath"
         Write-ChannelMessage  "BinPath $BinPath"
@@ -57,7 +59,12 @@ function Install-ContextualMenu{
 
         $Cmd = '"' + $RunnerPath + '"'
         $Cmd += ' "%1"'
+
+        $RemoveShimCmd = '"' + $RemoveShimPath + '"'
+        $RemoveShimCmd += ' "%1"'
+
         New-Item $RegistryPath -Force -Value "$Cmd"
+        New-Item $RegistryPathDel -Force -Value "$RemoveShimCmd"
         Write-ChannelMessage  "Cmd $$Cmd"
 
         if(-not(Test-Path $IconPath)){
@@ -66,6 +73,9 @@ function Install-ContextualMenu{
             Write-ChannelMessage  "IconPath $IconPath UDPATE"
         }
         
+        New-ItemProperty 'HKCR:\exefile\shell\delshim' -Name 'Icon' -Value  "$IconPath" | Out-Null
+        New-ItemProperty 'HKCR:\exefile\shell\delshim' -Name 'MUIVerb' -Value 'Remove a Shim' | Out-Null
+
         New-ItemProperty 'HKCR:\exefile\shell\addshim' -Name 'Icon' -Value  "$IconPath" | Out-Null
         New-ItemProperty 'HKCR:\exefile\shell\addshim' -Name 'MUIVerb' -Value 'Add a Shim' | Out-Null
         Remove-PSDrive -Name HKCR

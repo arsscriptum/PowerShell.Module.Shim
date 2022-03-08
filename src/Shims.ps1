@@ -208,7 +208,6 @@ function Initialize-Shim{
 
     try {
         Write-Output "Setup: add to registry"
-        Write-Verbose "Setup: new registry HKCU:\Software\CodeCastor\shims - shims_location $Path"
         $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" $Path "string"
         $ShimGenPath = Get-ShimGenExePath 
         Write-Verbose "Setup: new registry HKCU:\Software\CodeCastor\shims - shimgen_exe_path $ShimGenPath"
@@ -312,6 +311,44 @@ function Repair-AllShimsTest{
 	  }
   }
 }
+
+
+function Remove-Shim{
+
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    param (
+     [parameter(Mandatory=$true)]
+     [ValidateNotNullOrEmpty()]$Name
+    )
+    try{
+        $DoneNoError = $True
+        $RegBasePath = "$ENV:OrganizationHKCU\shims\$Name"
+        Remove-Item -Path $RegBasePath -Force -ErrorAction Stop | Out-null
+        $Path = Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location"
+        $Path = Join-Path $Path $Name
+        $Path += '.exe'
+        if(Test-Path $Path){
+            Write-Host -ForegroundColor DarkRed "[ DELETE ] " -NoNewline
+            Write-Host " $Path" -ForegroundColor DarkYellow     
+            Remove-Item -Path $Path -Force -ErrorAction Stop | Out-null
+        }
+        return $DoneNoError
+    }catch{
+        $DoneNoError = $false
+    }
+    finally{
+        if($DoneNoError ){
+          Write-Host -ForegroundColor DarkGreen "[DONE] " -NoNewline
+          Write-Host " Remove-Shim completed" -ForegroundColor DarkGray      
+        }else{
+            Write-Host -ForegroundColor DarkRed "[ ERROR ] " -NoNewline
+            Write-Host " no such shim " -ForegroundColor DarkYellow 
+        }
+  }
+
+  return $DoneNoError
+}
+
 
 function New-Shim{
     <#

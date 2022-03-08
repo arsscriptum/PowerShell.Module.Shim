@@ -8,7 +8,10 @@
 [CmdletBinding(SupportsShouldProcess)]
 param (
       [Parameter(Mandatory = $false)]
-      [switch]$Uninstall
+      [switch]$Uninstall,
+      [Parameter(Mandatory = $false)]
+      [switch]$GUI
+
     )
 
 
@@ -56,8 +59,6 @@ $ScriptList | ForEach-Object {
 
 
 try{
-    Import-Module CodeCastor.PowerShell.PS2EXE
-
 
     Write-ChannelMessage  "====================================="
     Write-ChannelMessage  "Compile-Runner"
@@ -67,10 +68,15 @@ try{
     $BinPath = Join-Path $RootPath 'bin'
     $ImgPath = Join-Path $RootPath 'img'
     $SetupPath = Join-Path $RootPath 'setup'
-    $RunnerScriptPath = Join-Path $SetupPath 'Runner.ps1'
+    $RunnerScriptPathGUI = Join-Path $SetupPath 'RemoveShim.ps1'
+    $RunnerScriptPath = Join-Path $SetupPath 'RemoveShim.ps1'
+    $RunnerExePathGUI = Join-Path $SetupPath 'RemoveShimGUI.exe'
+    $RunnerExePath = Join-Path $SetupPath 'RemoveShim.exe'  
     $ImagePath = Join-Path $ImgPath 'MyShim.png'
     $IconPath = Join-Path $ImgPath 'AddShim.ico'
-    $RunnerPath = Join-Path $BinPath 'Runner.exe'
+    $RunnerPathGUI = Join-Path $BinPath 'RemoveShimGUI.exe'
+    $AddShimGUI = Join-Path $BinPath 'RemoveShimGUI.exe'
+    $RunnerPath = Join-Path $BinPath 'RemoveShim.exe'
 
 
     Write-ChannelMessage  "RootPath $RootPath"
@@ -79,10 +85,33 @@ try{
     Write-ChannelMessage  "IconPath $IconPath"
     Write-ChannelMessage  "RunnerPath $RunnerPath"
 
-    Invoke-ps2exe -inputFile $RunnerScriptPath -outputFile "$RunnerPath" -iconFile "$IconPath" 
 
-    Write-ChannelResult "SUCCESS!"  
-    Write-Host "Now, you cam configure the contextual menu..."
+    if($GUI){
+        Invoke-ps2exe -inputFile $RunnerScriptPathGUI -iconFile "$IconPath"  -noConsole -noError -noOutput
+    }else{
+        Invoke-ps2exe -inputFile $RunnerScriptPath -outputFile "$RunnerPath" -iconFile "$IconPath"
+    }
+
+
+    if($GUI){
+        if(Test-Path $RunnerExePathGUI){
+            Copy-Item $RunnerExePathGUI $RunnerPathGUI -Force -ErrorAction Ignore
+            Copy-Item $RunnerExePathGUI $AddShimGUI -Force -ErrorAction Ignore
+            Write-ChannelResult "SUCCESS!"  
+            Write-Host " Copy-Item $RunnerExePathGUI $RunnerPathGUI"
+            Write-Host " Copy-Item $RunnerExePathGUI $AddShimGUI "
+        }
+    }else{
+        if(Test-Path $RunnerExePath){
+            Copy-Item $RunnerExePath $RunnerPath -Force -ErrorAction Ignore
+            Write-ChannelResult "SUCCESS!"  
+            Write-Host "Now, you cam configure the contextual menu..."
+        }  
+    }
+
+
+
+
 }catch {
     Write-ChannelResult "Build failure" -Warning    
 }
