@@ -322,16 +322,19 @@ function Remove-Shim{
     )
     try{
         $DoneNoError = $True
-        $RegBasePath = "$ENV:OrganizationHKCU\shims\$Name"
-        Remove-Item -Path $RegBasePath -Force -ErrorAction Stop | Out-null
-        $Path = Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location"
-        $Path = Join-Path $Path $Name
-        $Path += '.exe'
-        if(Test-Path $Path){
-            Write-Host -ForegroundColor DarkRed "[ DELETE ] " -NoNewline
-            Write-Host " $Path" -ForegroundColor DarkYellow     
-            Remove-Item -Path $Path -Force -ErrorAction Stop | Out-null
+        if($Name -ne ''){
+            $RegBasePath = "$ENV:OrganizationHKCU\shims\$Name"
+            Remove-Item -Path $RegBasePath -Force -ErrorAction Stop | Out-null
+            $Path = Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location"
+            $Path = Join-Path $Path $Name
+            $Path += '.exe'
+            if(Test-Path $Path){
+                Write-Host -ForegroundColor DarkRed "[ DELETE ] " -NoNewline
+                Write-Host " $Path" -ForegroundColor DarkYellow     
+                Remove-Item -Path $Path -Force -ErrorAction Stop | Out-null
+            }   
         }
+
         return $DoneNoError
     }catch{
         $DoneNoError = $false
