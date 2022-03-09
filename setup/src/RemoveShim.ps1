@@ -1,29 +1,10 @@
-<#̷#̷\
-#̷\ 
-#̷\   ⼕龱ᗪ㠪⼕闩丂ㄒ龱尺 ᗪ㠪ᐯ㠪㇄龱尸爪㠪𝓝ㄒ
-#̷\    
-#̷\   🇵​​​​​🇴​​​​​🇼​​​​​🇪​​​​​🇷​​​​​🇸​​​​​🇭​​​​​🇪​​​​​🇱​​​​​🇱​​​​​ 🇸​​​​​🇨​​​​​🇷​​​​​🇮​​​​​🇵​​​​​🇹​​​​​ 🇧​​​​​🇾​​​​​ 🇨​​​​​🇴​​​​​🇩​​​​​🇪​​​​​🇨​​​​​🇦​​​​​🇸​​​​​🇹​​​​​🇴​​​​​🇷​​​​​@🇮​​​​​🇨​​​​​🇱​​​​​🇴​​​​​🇺​​​​​🇩​​​​​.🇨​​​​​🇴​​​​​🇲​​​​​
-#̷\
-#̷\   Generated on Tue, 07 Dec 2021 15:21:31 GMT 
-#̷\
-#̷##>
+
 
 [CmdletBinding(SupportsShouldProcess)]
 param (
 
     [parameter(Position=0,Mandatory=$true)]
-    [ValidateScript({
-        if(-Not ($_ | Test-Path) ){
-            throw "File or folder does not exist"
-        }
-        if(-Not ($_ | Test-Path -PathType Leaf) ){
-            throw "The Path argument must be an executable."
-        }
-        return $true 
-    })]
-    [string]$TargetPath,
-    [parameter(Position=1,Mandatory=$false)]
-    [string]$Name
+    [string]$Path
 )  
 
 #Requires -Version 5
@@ -99,17 +80,17 @@ param (
     [parameter(Position=0,Mandatory=$true)]
     [string]$Source,
     [parameter(Position=1,Mandatory=$true)]
-    [string]$Color,
-    [parameter(Position=2,Mandatory=$false)]
-    [int]$FontSize = 16
+    [string]$Title
+    
 )  
-    $Source = $IcoPath
+    [string]$Color='Red'
+    [int]$FontSize = 16
     $Image = New-Object System.Windows.Controls.Image
     $Image.Source = $Source
     $Image.Height = [System.Drawing.Image]::FromFile($Source).Height / 2
     $Image.Width = [System.Drawing.Image]::FromFile($Source).Width / 2
          
-    Show-MessageBox -Content $Image -Title "Shim Created!" -TitleFontWeight "Bold" -TitleBackground "$Color" -TitleTextForeground Black -TitleFontSize $FontSize -ContentBackground "$Color" -ContentFontSize ($FontSize-10) -ButtonTextForeground 'Black' -ContentTextForeground 'White'
+    Show-MessageBox -Content $Image -Title "$Title" -TitleFontWeight "Bold" -TitleBackground "$Color" -TitleTextForeground Black -TitleFontSize $FontSize -ContentBackground "$Color" -ContentFontSize ($FontSize-10) -ButtonTextForeground 'Black' -ContentTextForeground 'White'
 }
 
 # ------------------------------------
@@ -146,28 +127,42 @@ $ScriptList | ForEach-Object {
     ConvertFrom-Base64CompressedScriptBlock -ScriptBlock $ScriptBlock | Invoke-Expression
 }
 
-$IcoPath = [Environment]::GetFolderPath("MyPictures")
-$IcoPath = Join-Path $IcoPath 'MyShim.png'
-
-
-$RootPath = "$ENV:OrganizationHKCU\shims"
-if(-not(Test-Path $RootPath)){
-    Write-ChannelMessage  "Missing Shim configuration"
+$ScriptMyInvocation = $Script:MyInvocation.MyCommand.Path
+$ModPath = (Get-Item $ScriptMyInvocation ).DirectoryName
+$RootPath = (Resolve-Path "$ModPath\..").Path
+$ImgPath = Join-Path $RootPath 'bin'
+$ImgPath = Join-Path $ImgPath 'Msg.png'
+Write-Host "----------------------------------------------------- $ImgPath" -f Red
+Register-Assemblies
+ PopupMessage $ImgPath "Removed"
+$ShimRemoved = $False
+$Shim = (Get-Item $Path).BaseName
+$RegBasePath = "$ENV:OrganizationHKCU\shims\"
+$shimexists=Test-RegistryValue "$RegBasePath\$Shim" 'shim'
+if($shimexists){
+    $ShimRemoved=$True
+    Remove-Item -Path "$RegBasePath\$Shim" -Force -ErrorAction Ignore | Out-null
+    PopupMessage $ImgPath "Removed $Shim"
+}
+$shimexists=Test-RegistryValue "$RegBasePath\$Shim.exe" 'shim'
+if($shimexists){
+    $ShimRemoved=$True
+    Remove-Item -Path "$RegBasePath\$Shim.exe" -Force -ErrorAction Ignore | Out-null
+    PopupMessage $ImgPath "Removed $Shim"
 }
 
-$RegBasePath = "$ENV:OrganizationHKCU\shims"
-$check1=Test-RegistryValue "$RegBasePath" "shimgen_exe_path"
-$check2=Test-RegistryValue "$RegBasePath" "shims_location"
-if($check1 -and $check2){
-    $shimgen=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" 
-    $shims=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" 
-}else{
-     Write-ChannelMessage   "Shim Configuration not completed`nref Initialize-Shim" -Warning
-    #PopupError "Shim Configuration not completed`nref Initialize-Shim"
-    return 
+if($ShimRemoved -eq $False){
+    $Shim = Read-Host -Prompt 'Enter Shim Name'
+    $shimexists=Test-RegistryValue "$RegBasePath\$Shim.exe" 'shim'
+    if($shimexists){
+        $ShimRemoved=$True
+        Remove-Item -Path "$RegBasePath\$Shim" -Force -ErrorAction Ignore | Out-null
+        PopupMessage $ImgPath "Removed $Shim"
+    }    
 }
 
-$res = New-Shim -Target $TargetPath  
-sleep 3
+
+
+sleep 1
 
 

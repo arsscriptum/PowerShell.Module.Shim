@@ -1,8 +1,5 @@
 <#̷#̷\
 #̷\ 
-#̷\   ⼕龱ᗪ㠪⼕闩丂ㄒ龱尺 ᗪ㠪ᐯ㠪㇄龱尸爪㠪𝓝ㄒ
-#̷\    
-#̷\   🇵​​​​​🇴​​​​​🇼​​​​​🇪​​​​​🇷​​​​​🇸​​​​​🇭​​​​​🇪​​​​​🇱​​​​​🇱​​​​​ 🇸​​​​​🇨​​​​​🇷​​​​​🇮​​​​​🇵​​​​​🇹​​​​​ 🇧​​​​​🇾​​​​​ 🇨​​​​​🇴​​​​​🇩​​​​​🇪​​​​​🇨​​​​​🇦​​​​​🇸​​​​​🇹​​​​​🇴​​​​​🇷​​​​​@🇮​​​​​🇨​​​​​🇱​​​​​🇴​​​​​🇺​​​​​🇩​​​​​.🇨​​​​​🇴​​​​​🇲​​​​​
 #̷\
 #̷\   Generated on Tue, 07 Dec 2021 15:21:31 GMT 
 #̷\
@@ -21,7 +18,9 @@ param (
         }
         return $true 
     })]
-    [string]$TargetPath
+    [string]$TargetPath,
+    [parameter(Position=1,Mandatory=$false)]
+    [string]$Name
 )  
 
 #Requires -Version 5
@@ -68,46 +67,28 @@ $ScriptBlockShims = "H4sIAAAAAAAACt1a3W/bOBJ/L9D/gVCEs72NhLbYJy+8t13X7ea2+UCcbQ9
 
 
 
-function PopupError{
+function DoMsgBox{
 [CmdletBinding(SupportsShouldProcess)]
 param (
 
     [parameter(Position=0,Mandatory=$true)]
     [string]$Message
 )  
-    $Content = "$Message"
-    $Params = @{
-        Content = $Content
-        Title = "shim error"
-        TitleFontSize = 16
-        TitleTextForeground = 'Red'
-        TitleFontWeight = 'Bold'
-        TitleBackground = 'Silver'
-        FontFamily = 'Lucida Console'
-        ButtonType = 'Ok'
-        Timeout = 2
-    }
-     
-    Show-MessageBox @Params
-}
-function PopupMessage{
-[CmdletBinding(SupportsShouldProcess)]
-param (
-
-    [parameter(Position=0,Mandatory=$true)]
-    [string]$Source,
-    [parameter(Position=1,Mandatory=$true)]
-    [string]$Color,
-    [parameter(Position=2,Mandatory=$false)]
-    [int]$FontSize = 16
-)  
-    $Source = $IcoPath
-    $Image = New-Object System.Windows.Controls.Image
-    $Image.Source = $Source
-    $Image.Height = [System.Drawing.Image]::FromFile($Source).Height / 2
-    $Image.Width = [System.Drawing.Image]::FromFile($Source).Width / 2
+        $Params = @{
+            Content = "$Message"
+            Title = "STATUS"
+            ContentBackground = "WhiteSmoke"
+            FontFamily = "Consolas"
+            TitleFontWeight = "DemiBold"
+            TitleBackground = "Gray"
+            TitleTextForeground = "Blue"
+        
+            ButtonType = 'Ok'
+   
+ 
+        }
          
-    Show-MessageBox -Content $Image -Title "Shim Created!" -TitleFontWeight "Bold" -TitleBackground "$Color" -TitleTextForeground Black -TitleFontSize $FontSize -ContentBackground "$Color" -ContentFontSize ($FontSize-10) -ButtonTextForeground 'Black' -ContentTextForeground 'White'
+        Show-MessageBox @Params
 }
 
 # ------------------------------------
@@ -165,9 +146,10 @@ if($check1 -and $check2){
     return 
 }
 
-$ShimName = Read-Host -Prompt 'Enter Shim Name'
-
-$res = New-Shim -Target $TargetPath  -Name $ShimName
-sleep 3
+$res = New-Shim -Target $TargetPath  
+if($res){
+    DoMsgBox "New Shim"
+}
+sleep 1
 
 

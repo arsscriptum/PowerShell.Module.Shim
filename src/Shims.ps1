@@ -210,7 +210,7 @@ function Initialize-Shim{
         Write-Output "Setup: add to registry"
         $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" $Path "string"
         $ShimGenPath = Get-ShimGenExePath 
-        Write-Verbose "Setup: new registry HKCU:\Software\CodeCastor\shims - shimgen_exe_path $ShimGenPath"
+      
         $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" $ShimGenPath "string"
 
         if($AddToPath){
@@ -438,18 +438,22 @@ function New-Shim{
         Invoke-ShimGenProgram $ShimFullPath $Target
         $Res = Test-Path $ShimFullPath
 
+        [pscustomobject]$Obj = @{
+            'target' = $Target 
+            'shim'   = $ShimFullPath
+        }
+
         Write-ChannelMessage " Presence of new shim: $Res"
         if($Res -eq $True){
           $null=New-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'target' $Target "string"
           $null=New-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'shim'   $ShimFullPath "string"
           Write-ChannelResult "Successfully created shim"
           Write-ChannelMessage "type '$Name' to run program."
-          return $true
+          return $ShimFullPath
         }
-        return $False
     }
     catch {
-        return $False
+        return $null
     }
 }
 

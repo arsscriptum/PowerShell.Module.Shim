@@ -34,10 +34,18 @@ function Install-ContextualMenu{
     
     try{
 
+
         # Create a temporary PowerShell drive called PSDrive:
         # that's mapped to the \\Server01\Public network share.
         New-PSDrive -PSProvider registry -Root HKEY_CLASSES_ROOT -Name HKCR
                 
+
+
+        Remove-Item 'HKCR:\exefile\shell\addshim' -EA Ignore -Force -Recurse| Out-Null
+        Remove-Item 'HKCR:\exefile\shell\delshim' -EA Ignore -Force -Recurse| Out-Null
+        New-Item 'HKCR:\exefile\shell\addshim' -EA Ignore -Force| Out-Null
+        New-Item 'HKCR:\exefile\shell\delshim' -EA Ignore -Force| Out-Null
+                        
         Write-ChannelMessage  "====================================="
         Write-ChannelMessage  "ContextualMenu Config"
         Write-ChannelMessage  "====================================="
@@ -47,38 +55,37 @@ function Install-ContextualMenu{
         $RootPath = (Resolve-Path "$PSScriptRoot\..").Path
         $BinPath = Join-Path $RootPath 'bin'
         $ImgPath = Join-Path $RootPath 'img'
-        $IconPath = Join-Path $ImgPath 'AddShim.ico'
-        $RunnerPath = Join-Path $BinPath 'Runner.exe'
+        $NewShimIconPath = Join-Path $ImgPath 'NewShim.ico'
+        $RemoveShimIconPath = Join-Path $ImgPath 'RemoveShim.ico'
+        $NewShimPath = Join-Path $BinPath 'NewShim.exe'
         $RemoveShimPath = Join-Path $BinPath 'RemoveShim.exe'
 
         Write-ChannelMessage  "RootPath $RootPath"
         Write-ChannelMessage  "BinPath $BinPath"
         Write-ChannelMessage  "ImgPath $ImgPath"
-        Write-ChannelMessage  "IconPath $IconPath"
-        Write-ChannelMessage  "RunnerPath $RunnerPath"
+        Write-ChannelMessage  "NewShimIconPath $NewShimIconPath"
 
-        $Cmd = '"' + $RunnerPath + '"'
-        $Cmd += ' "%1"'
+
+        $NewShimCmd = '"' + $NewShimPath + '"'
+        $NewShimCmd += ' "%1"'
 
         $RemoveShimCmd = '"' + $RemoveShimPath + '"'
         $RemoveShimCmd += ' "%1"'
 
-        New-Item $RegistryPath -Force -Value "$Cmd"
+        New-Item $RegistryPath -Force -Value "$NewShimCmd"
         New-Item $RegistryPathDel -Force -Value "$RemoveShimCmd"
-        Write-ChannelMessage  "Cmd $$Cmd"
+        Write-ChannelMessage  "NewShimCmd $NewShimCmd"
+        Write-ChannelMessage  "NewShimIconPath $NewShimIconPath"
+        Write-ChannelMessage  "RemoveShimPath $RemoveShimPath"
 
-        if(-not(Test-Path $IconPath)){
-            $IconPath = [Environment]::GetFolderPath("MyPictures")
-            $IconPath = Join-Path $IconPath 'MyShim.png'
-            Write-ChannelMessage  "IconPath $IconPath UDPATE"
-        }
-        
-        New-ItemProperty 'HKCR:\exefile\shell\delshim' -Name 'Icon' -Value  "$IconPath" | Out-Null
+
+        New-ItemProperty 'HKCR:\exefile\shell\delshim' -Name 'Icon' -Value  "$RemoveShimIconPath" | Out-Null
         New-ItemProperty 'HKCR:\exefile\shell\delshim' -Name 'MUIVerb' -Value 'Remove a Shim' | Out-Null
 
-        New-ItemProperty 'HKCR:\exefile\shell\addshim' -Name 'Icon' -Value  "$IconPath" | Out-Null
+        New-ItemProperty 'HKCR:\exefile\shell\addshim' -Name 'Icon' -Value  "$NewShimIconPath" | Out-Null
         New-ItemProperty 'HKCR:\exefile\shell\addshim' -Name 'MUIVerb' -Value 'Add a Shim' | Out-Null
         Remove-PSDrive -Name HKCR
+
     } catch {
         Show-ExceptionDetails($_)
     }
@@ -146,3 +153,5 @@ if($Uninstall){
 Write-Host "Starting configuration" -f DarkYellow
 Install-ContextualMenu
 Write-Host "Install Completed, exiting." -f DarkYellow
+
+Read-Host 'e'

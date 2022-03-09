@@ -27,6 +27,42 @@ $ScriptBlockMiscellaneous = "H4sIAAAAAAAACu0c/XPayPX3zOR/2BK1SEmki6+9mTYe2iOAExr
 # ------------------------------------
 # Loader
 # ------------------------------------
+function CompileExecutableFromScript{
+
+
+    [CmdletBinding()] param(
+        [Parameter(Mandatory=$true,Position=0)]
+        [String]$In,
+        [parameter(Position=1,Mandatory=$true)]
+        [String]$Icon,
+        [parameter(Position=2,Mandatory=$false)]
+        [String]$Out,
+        [parameter(Mandatory=$false)]
+        [switch]$IsGUI
+    )
+
+
+    if($GUI){
+        if($Out){
+            Invoke-ps2exe -inputFile $In -outputFile $Out -iconFile "$Icon"  -noConsole -noError -noOutput    
+        }else{
+            Invoke-ps2exe -inputFile $In -iconFile "$Icon"  -noConsole -noError -noOutput    
+        }
+        
+    }else{
+        if($Out){
+            Invoke-ps2exe -inputFile $In -outputFile $Out -iconFile "$Icon" 
+        }else{
+            Invoke-ps2exe -inputFile $In -iconFile "$Icon" 
+        }
+    }
+}
+
+
+
+# ------------------------------------
+# Loader
+# ------------------------------------
 function ConvertFrom-Base64CompressedScriptBlock {
 
     [CmdletBinding()] param(
@@ -64,21 +100,6 @@ try{
     Write-ChannelMessage  "Compile-Runner"
     Write-ChannelMessage  "====================================="
 
-    $RootPath = (Resolve-Path "$PSScriptRoot\..").Path
-    $BinPath = Join-Path $RootPath 'bin'
-    $ImgPath = Join-Path $RootPath 'img'
-    $SetupPath = Join-Path $RootPath 'setup'
-    $RunnerScriptPathGUI = Join-Path $SetupPath 'RemoveShim.ps1'
-    $RunnerScriptPath = Join-Path $SetupPath 'RemoveShim.ps1'
-    $RunnerExePathGUI = Join-Path $SetupPath 'RemoveShimGUI.exe'
-    $RunnerExePath = Join-Path $SetupPath 'RemoveShim.exe'  
-    $ImagePath = Join-Path $ImgPath 'MyShim.png'
-    $IconPath = Join-Path $ImgPath 'AddShim.ico'
-    $RunnerPathGUI = Join-Path $BinPath 'RemoveShimGUI.exe'
-    $AddShimGUI = Join-Path $BinPath 'RemoveShimGUI.exe'
-    $RunnerPath = Join-Path $BinPath 'RemoveShim.exe'
-
-
     Write-ChannelMessage  "RootPath $RootPath"
     Write-ChannelMessage  "BinPath $BinPath"
     Write-ChannelMessage  "ImgPath $ImgPath"
@@ -86,29 +107,25 @@ try{
     Write-ChannelMessage  "RunnerPath $RunnerPath"
 
 
-    if($GUI){
-        Invoke-ps2exe -inputFile $RunnerScriptPathGUI -iconFile "$IconPath"  -noConsole -noError -noOutput
-    }else{
-        Invoke-ps2exe -inputFile $RunnerScriptPath -outputFile "$RunnerPath" -iconFile "$IconPath"
+    $RootPath = (Resolve-Path "$PSScriptRoot\..").Path
+    $BinPath = Join-Path $RootPath 'bin'
+    $ImgPath = Join-Path $RootPath 'img'
+    $SrcPath = Join-Path $PSScriptRoot 'src'
+
+    $Files=(gci $SrcPath -File -Filter '*.ps1')
+    pushd $SrcPath
+    ForEach($f in $Files){
+        $fname = $f.Name
+        $full = $f.Fullname
+        $base = $f.BaseName
+        $icon = Join-Path $ImgPath $base
+        $icon = $icon + '.ico'
+        CompileExecutableFromScript $full $icon
+        
     }
 
-
-    if($GUI){
-        if(Test-Path $RunnerExePathGUI){
-            Copy-Item $RunnerExePathGUI $RunnerPathGUI -Force -ErrorAction Ignore
-            Copy-Item $RunnerExePathGUI $AddShimGUI -Force -ErrorAction Ignore
-            Write-ChannelResult "SUCCESS!"  
-            Write-Host " Copy-Item $RunnerExePathGUI $RunnerPathGUI"
-            Write-Host " Copy-Item $RunnerExePathGUI $AddShimGUI "
-        }
-    }else{
-        if(Test-Path $RunnerExePath){
-            Copy-Item $RunnerExePath $RunnerPath -Force -ErrorAction Ignore
-            Write-ChannelResult "SUCCESS!"  
-            Write-Host "Now, you cam configure the contextual menu..."
-        }  
-    }
-
+    Copy-Item "$SrcPath\*.exe" "$BinPath" -Verbose -Force
+    popd
 
 
 
