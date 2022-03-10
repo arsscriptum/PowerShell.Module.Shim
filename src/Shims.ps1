@@ -139,17 +139,26 @@ function Get-ShimLocation{      # NOEXPORT
     $ShimsPath=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" 
     if(Test-Path $ShimsPath){
         Write-Verbose "Get-ShimLocation: check registry. returns $ShimsPath"
+        if ($ShimsPath -notmatch '\\$'){
+            $ShimsPath += '\'
+        }
         return $ShimsPath
     }
     $ShimsPath=$Env:ShimsPath
     if(Test-Path $ShimsPath){
         Write-Verbose "Get-ShimLocation: check Env:ShimsPath. returns $ShimsPath"
+        if ($ShimsPath -notmatch '\\$'){
+            $ShimsPath += '\'
+        }
         return $ShimsPath
     }
     # current location
     $ShimsPath=(Get-Location).Path
     if(Test-Path $ShimsPath){
         Write-Verbose "Get-ShimLocation: use current location. returns $ShimsPath"
+       if ($ShimsPath -notmatch '\\$'){
+            $ShimsPath += '\'
+        }
         return $ShimsPath
     }
 
@@ -206,6 +215,9 @@ function Initialize-Shim{
     # stop immediately on error
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
+    if ($Path -notmatch '\\$'){
+        $Path += '\'
+    }
     try {
         Write-Output "Setup: add to registry"
         $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" $Path "string"
@@ -323,19 +335,28 @@ function Remove-Shim{
     try{
         $DoneNoError = $True
         if($Name -ne ''){
-            $RegBasePath = "$ENV:OrganizationHKCU\shims\$Name"
-            Remove-Item -Path $RegBasePath -Force -ErrorAction Stop | Out-null
-            $Path = Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location"
-            $Path = Join-Path $Path $Name
-            $Path += '.exe'
-            if(Test-Path $Path){
-                Write-Host -ForegroundColor DarkRed "[ DELETE ] " -NoNewline
-                Write-Host " $Path" -ForegroundColor DarkYellow     
-                Remove-Item -Path $Path -Force -ErrorAction Stop | Out-null
-            }   
-        }
+            $ShimLocation=Get-ShimLocation
+            Write-Verbose "ShimLocation $ShimLocation"
+            if(-not(Test-Path $ShimLocation)){
+                throw 'could not find Shim location'
 
-        return $DoneNoError
+            }
+            $ShimFullPath = $ShimLocation + $Name
+            if ($ShimFullPath.get_Length() -gt 4)
+            {
+                $lastchars=$ShimFullPath.Substring($ShimFullPath.get_Length()-4)
+                if($lastchars -notmatch ".exe")
+                {
+                     $ShimFullPath += '.exe'
+                }
+            }
+            Write-Verbose "ShimFullPath $ShimFullPath"
+            $RegBasePath = "$ENV:OrganizationHKCU\shims\$Name"
+            Remove-Item -Path $RegBasePath -Force -recurse -ErrorAction Ignore | Out-null
+   
+            Remove-Item -Path $ShimFullPath -Force -ErrorAction Stop | Out-null
+              
+        }
     }catch{
         $DoneNoError = $false
     }
@@ -375,9 +396,14 @@ function New-Shim{
      [parameter(Mandatory=$true)]
      [ValidateNotNullOrEmpty()]$Target,
      [parameter(Mandatory=$false)]
-     [ValidateNotNullOrEmpty()]$Name
+     [ValidateNotNullOrEmpty()]$Name,
+     [parameter(Mandatory=$false)]
+     [switch]$Force     
     )
 
+    if($Force){        
+        $removed = Remove-Shim -Name $Name
+    }
     $ShimGenExe=Get-ShimGenExePath
     Write-Verbose "ShimGenExePath $ShimGenExe"
     if(-not(Test-Path $ShimGenExe)){
@@ -390,6 +416,7 @@ function New-Shim{
         throw 'could not find Shim location'
 
     }
+
     $Target = (Resolve-Path -Path $Target).Path
     Write-Verbose "Target $Target"
     if(-not(Test-Path $Target)){
@@ -407,43 +434,51 @@ function New-Shim{
     }
     try {
 
+        Write-Verbose "Add-Shim: name is $Name"
+        $ShimFullPath = $ShimLocation + $Name
+
+
         Write-ChannelMessage "Creating new shim"
 
         $exists1=Test-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'target'
         $exists2=Test-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'shim'
         if($exists1 -or $exists2){
+            Write-ChannelResult -Warning -Message "shim already exists, delete before adding. Use -Force or See Remove-Shim"
             throw 'shim already exists, delete before adding. See "Remove-Shim"'
             return
         }
 
-        Write-Verbose "Add-Shim: name is $Name"
-        $ShimFullPath = $ShimLocation + $Name
-
-        if ($Name.get_Length() -gt 4)
-        {
-            $lastchars=$Name.Substring($Name.get_Length()-4)
-            if($lastchars -notmatch ".exe")
-            {
-                Write-Verbose "New-Shim: adding suffix $Sfix.  $ShimFullPath"
-                Write-ChannelMessage "New-Shim: adding suffix $Sfix to name."
-                $ShimFullPath += '.exe'
-            }
-        }
         else{
             $ShimFullPath += '.exe'
         }
+        Write-Verbose "New-Shim: $ShimFullPath"
 
+        $Res = Test-Path $ShimFullPath
+        if($Res -eq $true){
+             Write-ChannelResult -Warning -Message "ALREADY EXISTS : $ShimFullPath"
+             throw  "ALREADY EXISTS : $ShimFullPath"
+             return $null
+        }
         Write-ChannelMessage "$ShimFullPath ==> $Target"
 
-        Invoke-ShimGenProgram $ShimFullPath $Target
+        $Res = Invoke-ShimGenProgram $ShimFullPath $Target
+        if($Res -eq $False){
+             Write-ChannelResult -Warning -Message "FAILURE : Invoke-ShimGenProgram $ShimFullPath $Target"
+             throw "FAILURE : Invoke-ShimGenProgram $ShimFullPath $Target"
+             return $null
+        }
         $Res = Test-Path $ShimFullPath
-
+        if($Res -eq $False){
+             Write-ChannelResult -Warning -Message "NOT FOUND : $ShimFullPath"
+             throw  "NOT FOUND : $ShimFullPath"
+             return $null
+        }
         [pscustomobject]$Obj = @{
             'target' = $Target 
             'shim'   = $ShimFullPath
         }
 
-        Write-ChannelMessage " Presence of new shim: $Res"
+
         if($Res -eq $True){
           $null=New-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'target' $Target "string"
           $null=New-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'shim'   $ShimFullPath "string"
@@ -452,8 +487,8 @@ function New-Shim{
           return $ShimFullPath
         }
     }
-    catch {
-        return $null
+    catch{
+        Show-ExceptionDetails($_) 
     }
 }
 
