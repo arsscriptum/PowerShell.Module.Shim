@@ -18,7 +18,7 @@ class ChannelProperties
     [ConsoleColor]$SuccessColor = 'DarkGreen'
     [ConsoleColor]$ErrorDescriptionColor = 'DarkYellow'
 }
-$Global:ChannelProps = [ChannelProperties]::new()
+$Script:ChannelProps = [ChannelProperties]::new()
 
 
 function Write-ChannelMessage{               # NOEXPORT   
@@ -28,8 +28,8 @@ function Write-ChannelMessage{               # NOEXPORT
         [string]$Message        
     )
 
-    Write-Host "[$($Global:ChannelProps.Channel)] " -f $($Global:ChannelProps.TitleColor) -NoNewLine
-    Write-Host "$Message" -f $($Global:ChannelProps.MessageColor)
+    Write-Host "[$($Script:ChannelProps.Channel)] " -f $($Script:ChannelProps.TitleColor) -NoNewLine
+    Write-Host "$Message" -f $($Script:ChannelProps.MessageColor)
 }
 
 
@@ -42,14 +42,14 @@ function Write-ChannelResult{                        # NOEXPORT
     )
 
     if($Warning -eq $False){
-        Write-Host "[$($Global:ChannelProps.Channel)] " -f $($Global:ChannelProps.SuccessColor) -NoNewLine
-        Write-Host " SUCCESS " -f $($Global:ChannelProps.SuccessColor) -NoNewLine
+        Write-Host "[$($Script:ChannelProps.Channel)] " -f $($Script:ChannelProps.SuccessColor) -NoNewLine
+        Write-Host " SUCCESS " -f $($Script:ChannelProps.SuccessColor) -NoNewLine
     }else{
-        Write-Host "[$($Global:ChannelProps.Channel)] " -f $($Global:ChannelProps.ErrorColor) -NoNewLine
-        Write-Host " ERROR " -f $($Global:ChannelProps.ErrorDescriptionColor) -NoNewLine
+        Write-Host "[$($Script:ChannelProps.Channel)] " -f $($Script:ChannelProps.ErrorColor) -NoNewLine
+        Write-Host " ERROR " -f $($Script:ChannelProps.ErrorDescriptionColor) -NoNewLine
     }
     
-    Write-Host "$Message" -f $($Global:ChannelProps.MessageColor)
+    Write-Host "$Message" -f $($Script:ChannelProps.MessageColor)
 }
 
 
@@ -63,7 +63,7 @@ function Write-ChannelError{                # NOEXPORT
     $formatstring = "{0}`n{1}"
     $fields = $Record.FullyQualifiedErrorId,$Record.Exception.ToString()
     $ExceptMsg=($formatstring -f $fields)
-    Write-Host "[$($Global:ChannelProps.Channel)] " -f $($Global:ChannelProps.TitleColor) -NoNewLine
-    Write-Host "[ERROR] " -f $($Global:ChannelProps.ErrorColor) -NoNewLine
+    Write-Host "[$($Script:ChannelProps.Channel)] " -f $($Script:ChannelProps.TitleColor) -NoNewLine
+    Write-Host "[ERROR] " -f $($Script:ChannelProps.ErrorColor) -NoNewLine
     Write-Host "$ExceptMsg`n`n" -ForegroundColor DarkYellow
 }
