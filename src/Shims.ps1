@@ -18,7 +18,7 @@ function Get-ShimGenExePath{
           return $ShimGenExe  
         }    
     }
-    
+    if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
     $Cmd =  Get-Command 'shimgen.exe' -ErrorAction Ignore
     if($Cmd -ne $null){
        $ShimGenExe = $Cmd.Source
@@ -113,6 +113,9 @@ function Invoke-ShimGenProgram{     # NOEXPORT
      [parameter(Mandatory=$true)]
      [ValidateNotNullOrEmpty()]$Target
     )
+
+    if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
+
     $ShimGenExePath=Get-ShimGenExePath
     # throw errors on undefined variables
 
@@ -136,6 +139,8 @@ function Invoke-ShimGenProgram{     # NOEXPORT
 function Get-ShimLocation{      # NOEXPORT
     [cmdletbinding()]
     Param()
+    if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
+
     $ShimsPath=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" 
     if(Test-Path $ShimsPath -EA Ignore){
         Write-Verbose "Get-ShimLocation: check registry. returns $ShimsPath"
@@ -155,7 +160,7 @@ function Get-ShimLocation{      # NOEXPORT
     # current location
     $ShimsPath=(Get-Location -EA Ignore).Path
     if(Test-Path $ShimsPath){
-        Write-Verbose "Get-ShimLocation: use current location. returns $ShimsPath"
+        Write-ChannelResult "Get-ShimLocation: use current location. returns $ShimsPath" -Warning
        if ($ShimsPath -notmatch '\\$'){
             $ShimsPath += '\'
         }
@@ -166,8 +171,15 @@ function Get-ShimLocation{      # NOEXPORT
 }
 
 
+function Get-IsShimInitialized{
+    $res = Get-RegistryValue "$ENV:OrganizationHKCU\shims" "initialized" -ErrorAction Ignore
+    if($res -eq $null){ return $false }
+    if($res -ne 1){ return $false }
+    return $true;
+}
 
-function Initialize-Shim{
+
+function Initialize-ShimModule{
 <#
     .Synopsis
        Setup the shim system. Needs to be run only once
@@ -178,7 +190,7 @@ function Initialize-Shim{
        Path where we store all the shims 
 
     .Example
-       Initialize-Shim -Path 'c:\Programs\Shims'
+       Initialize-ShimModule -Path 'c:\Programs\Shims'
 #>
 
     [CmdletBinding(SupportsShouldProcess)]
@@ -219,11 +231,13 @@ function Initialize-Shim{
         $Path += '\'
     }
     try {
-        Write-Output "Setup: add to registry"
-        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" $Path "string"
+        $null=New-Item "$ENV:OrganizationHKCU\shims" -Force
+        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" $Path "string"      
+        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" 'temp' "string"
+        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "initialized" 1 "DWORD"
         $ShimGenPath = Get-ShimGenExePath 
-      
-        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" $ShimGenPath "string"
+
+        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" '$ShimGenPath' "string"
 
         if($AddToPath){
           Write-Output "Setup: add to system path"
@@ -249,7 +263,7 @@ function Invoke-AutoUpdateProgress{
 }
 
 
-function Repair-AllShimsTest{
+function Repair-AllShims{
 <#
     .Synopsis
        Update all the shims on disk using the entries backed up in the registry
@@ -258,7 +272,7 @@ function Repair-AllShimsTest{
 #>
     [CmdletBinding(SupportsShouldProcess=$true)]
     param ()
-
+    if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
     $Script:StepNumber = 0
     $Script:TotalSteps = 1
     $Script:ProgressMessage = "REPAIRING ALL SHIMS..."
@@ -272,42 +286,42 @@ function Repair-AllShimsTest{
     $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
     try {
-    $ShimGenExe=Get-ShimGenExePath
-    if(-not(Test-Path $ShimGenExe)){
-      Write-Error "could not find shimgen.exe $ShimGenExe"
-        return
-    }
-    $RegBasePath = "$ENV:OrganizationHKCU\shims\"
- 
-    
-    $AllShimEntries=(Get-Item "$RegBasePath\*").PSChildName
-    $count=$AllShimEntries.Count
-    Write-Verbose "Repair-AllShims: get entries in $RegBasePath* : $count"
-    $Script:StepNumber = 0
-    $Script:TotalSteps = $count
-	$TargetPath = 
-	
-    foreach($Shim in $AllShimEntries){
-		Invoke-AutoUpdateProgress
-		$Script:ProgressMessage = "Reset shim $Shim ($Script:StepNumber / $Script:TotalSteps)"
-      $targetexists=Test-RegistryValue "$RegBasePath\$Shim" 'target'
-      $shimexists=Test-RegistryValue "$RegBasePath\$Shim" 'shim'
-      if($targetexists -and $shimexists){
-		  
-        $Target=(Get-ItemProperty "$RegBasePath\$Shim").Target
-        $Shim=(Get-ItemProperty "$RegBasePath\$Shim").Shim
+        $ShimGenExe=Get-ShimGenExePath
+        if(-not(Test-Path $ShimGenExe)){
+          Write-Error "could not find shimgen.exe $ShimGenExe"
+            return
+        }
+        $RegBasePath = "$ENV:OrganizationHKCU\shims\"
+     
+        
+        $AllShimEntries=(Get-Item "$RegBasePath\*").PSChildName
+        $count=$AllShimEntries.Count
+        Write-Verbose "Repair-AllShims: get entries in $RegBasePath* : $count"
+        $Script:StepNumber = 0
+        $Script:TotalSteps = $count
+    	$TargetPath = 
+    	
+        foreach($Shim in $AllShimEntries){
+    		Invoke-AutoUpdateProgress
+    		$Script:ProgressMessage = "Reset shim $Shim ($Script:StepNumber / $Script:TotalSteps)"
+          $targetexists=Test-RegistryValue "$RegBasePath\$Shim" 'target'
+          $shimexists=Test-RegistryValue "$RegBasePath\$Shim" 'shim'
+          if($targetexists -and $shimexists){
+    		  
+            $Target=(Get-ItemProperty "$RegBasePath\$Shim").Target
+            $Shim=(Get-ItemProperty "$RegBasePath\$Shim").Shim
 
-        Remove-Item -Path $Shim -Force -ErrorAction Ignore | Out-null
-        New-Item -Path $Shim -ItemType File -Force -ErrorAction Ignore | Out-null
-        $Fullname = (Get-Item  -Path $Shim).Fullname
-        Remove-Item -Path $Shim -Force -ErrorAction Ignore | Out-null
-        Invoke-ShimGenProgram -Name $Fullname -Target $Target | Out-null
-        Sleep 1
-		
-      }
-	  
-    }
-	
+            Remove-Item -Path $Shim -Force -ErrorAction Ignore | Out-null
+            New-Item -Path $Shim -ItemType File -Force -ErrorAction Ignore | Out-null
+            $Fullname = (Get-Item  -Path $Shim).Fullname
+            Remove-Item -Path $Shim -Force -ErrorAction Ignore | Out-null
+            Invoke-ShimGenProgram -Name $Fullname -Target $Target | Out-null
+            Sleep 1
+    		
+          }
+    	  
+        }
+    	
 	
 
     }catch{
@@ -324,7 +338,66 @@ function Repair-AllShimsTest{
   }
 }
 
+function Remove-AllShims{
+<#
+    .Synopsis
+       Update all the shims on disk using the entries backed up in the registry
+    .Description
+       Update all the shims on disk using the entries backed up in the registry
+#>
+    [CmdletBinding(SupportsShouldProcess=$true)]
+    param ()
+    if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
+    $Script:StepNumber = 0
+    $Script:TotalSteps = 1
+    $Script:ProgressMessage = "DELETNG ALL SHIMS..."
+    $Script:ProgressTitle = "DELETNG ALL SHIMS..."
+    Invoke-AutoUpdateProgress  
+    
+    # throw errors on undefined variables
+    Set-StrictMode -Version 1
 
+    # stop immediately on error
+    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+
+    try {
+        $ShimGenExe=Get-ShimGenExePath
+        if(-not(Test-Path $ShimGenExe)){
+          Write-Error "could not find shimgen.exe $ShimGenExe"
+            return
+        }
+        $RegBasePath = "$ENV:OrganizationHKCU\shims\"
+     
+        
+        $AllShimEntries=(Get-Item "$RegBasePath\*").PSChildName
+        $count=$AllShimEntries.Count
+        Write-Verbose "Remove-AllShims: get entries in $RegBasePath* : $count"
+        $Script:StepNumber = 0
+        $Script:TotalSteps = $count
+
+        foreach($Shim in $AllShimEntries){
+            Invoke-AutoUpdateProgress
+            $Script:ProgressMessage = "DELETE shim $Shim ($Script:StepNumber / $Script:TotalSteps)"
+          
+            $shimexists=Test-RegistryValue "$RegBasePath\$Shim" 'shim'
+            if($shimexists){
+                $Shim=(Get-ItemProperty "$RegBasePath\$Shim").Shim
+
+                Remove-Item -Path $Shim -Force -ErrorAction Ignore | Out-null
+            }
+        }
+        
+    
+        Remove-Item -Path $RegBasePath -Recurse -Force -ErrorAction Ignore | Out-null
+    }catch{
+      Show-ExceptionDetails($_) -ShowStack
+    }
+    finally{
+      Write-Host -ForegroundColor DarkGreen "[DONE] " -NoNewline
+      Write-Host " Remove-AllShims completed" -ForegroundColor DarkGray
+      
+  }
+}
 function Remove-Shim{
 
     [CmdletBinding(SupportsShouldProcess=$true)]
@@ -333,6 +406,8 @@ function Remove-Shim{
      [ValidateNotNullOrEmpty()]$Name
     )
     try{
+        if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
+
         $DoneNoError = $True
         if($Name -ne ''){
             $ShimLocation=Get-ShimLocation
@@ -401,7 +476,7 @@ function New-Shim{
      [switch]$Force     
     )
 
-
+    if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
     $ShimGenExe=Get-ShimGenExePath
     Write-Verbose "ShimGenExePath $ShimGenExe"
     if(-not(Test-Path $ShimGenExe)){
