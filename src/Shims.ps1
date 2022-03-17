@@ -14,7 +14,7 @@ function Get-ShimGenExePath{
     $Exists=Test-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
     if($Exists){
         $ShimGenExe=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
-        if(Test-Path $ShimGenExe){
+        if(Test-Path $ShimGenExe -EA Ignore){
           return $ShimGenExe  
         }    
     }
@@ -137,7 +137,7 @@ function Get-ShimLocation{      # NOEXPORT
     [cmdletbinding()]
     Param()
     $ShimsPath=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" 
-    if(Test-Path $ShimsPath){
+    if(Test-Path $ShimsPath -EA Ignore){
         Write-Verbose "Get-ShimLocation: check registry. returns $ShimsPath"
         if ($ShimsPath -notmatch '\\$'){
             $ShimsPath += '\'
@@ -145,7 +145,7 @@ function Get-ShimLocation{      # NOEXPORT
         return $ShimsPath
     }
     $ShimsPath=$Env:ShimsPath
-    if(Test-Path $ShimsPath){
+    if(Test-Path $ShimsPath -EA Ignore){
         Write-Verbose "Get-ShimLocation: check Env:ShimsPath. returns $ShimsPath"
         if ($ShimsPath -notmatch '\\$'){
             $ShimsPath += '\'
@@ -153,7 +153,7 @@ function Get-ShimLocation{      # NOEXPORT
         return $ShimsPath
     }
     # current location
-    $ShimsPath=(Get-Location).Path
+    $ShimsPath=(Get-Location -EA Ignore).Path
     if(Test-Path $ShimsPath){
         Write-Verbose "Get-ShimLocation: use current location. returns $ShimsPath"
        if ($ShimsPath -notmatch '\\$'){
@@ -401,9 +401,7 @@ function New-Shim{
      [switch]$Force     
     )
 
-    if($Force){        
-        $removed = Remove-Shim -Name $Name
-    }
+
     $ShimGenExe=Get-ShimGenExePath
     Write-Verbose "ShimGenExePath $ShimGenExe"
     if(-not(Test-Path $ShimGenExe)){
@@ -434,6 +432,9 @@ function New-Shim{
     }
     try {
 
+        if($Force){        
+            $removed = Remove-Shim -Name $Name
+        }
         Write-Verbose "Add-Shim: name is $Name"
         $ShimFullPath = $ShimLocation + $Name
 
@@ -446,10 +447,6 @@ function New-Shim{
             Write-ChannelResult -Warning -Message "shim already exists, delete before adding. Use -Force or See Remove-Shim"
             throw 'shim already exists, delete before adding. See "Remove-Shim"'
             return
-        }
-
-        else{
-            $ShimFullPath += '.exe'
         }
         Write-Verbose "New-Shim: $ShimFullPath"
 
