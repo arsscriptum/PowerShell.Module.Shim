@@ -353,7 +353,7 @@ function Remove-AllShims{
     $Script:ProgressMessage = "DELETNG ALL SHIMS..."
     $Script:ProgressTitle = "DELETNG ALL SHIMS..."
     Invoke-AutoUpdateProgress  
-    
+    write-host "WARNING" -f Red -b DarkGray -NoNewLine ; $a=Read-Host -Prompt "REMOVE ALL SHIMS. Are you sure (y/N)?" ; if($a -notmatch "y") {return;}
     # throw errors on undefined variables
     Set-StrictMode -Version 1
 
