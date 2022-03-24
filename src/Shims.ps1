@@ -7,13 +7,21 @@
 #̷##>
 
 
-
+function Get-ShimModuleRegistryPath { 
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+    if( $ExecutionContext -eq $null ) { throw "not in module"; return "" ; }
+    $ModuleName = ($ExecutionContext.SessionState).Module
+    $Path = "$ENV:OrganizationHKCU\$ModuleName"
+   
+    return $Path
+}
 function Get-ShimGenExePath{
     [cmdletbinding()]
     Param()
-    $Exists=Test-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
+    $Exists=Test-RegistryValue (Get-ShimModuleRegistryPath) "shimgen_exe_path"
     if($Exists){
-        $ShimGenExe=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path"
+        $ShimGenExe=Get-RegistryValue (Get-ShimModuleRegistryPath) "shimgen_exe_path"
         if(Test-Path $ShimGenExe -EA Ignore){
           return $ShimGenExe  
         }    
@@ -141,7 +149,7 @@ function Get-ShimLocation{      # NOEXPORT
     Param()
     if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
 
-    $ShimsPath=Get-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" 
+    $ShimsPath=Get-RegistryValue (Get-ShimModuleRegistryPath) "shims_location" 
     if(Test-Path $ShimsPath -EA Ignore){
         Write-Verbose "Get-ShimLocation: check registry. returns $ShimsPath"
         if ($ShimsPath -notmatch '\\$'){
@@ -172,7 +180,7 @@ function Get-ShimLocation{      # NOEXPORT
 
 
 function Get-IsShimInitialized{
-    $res = Get-RegistryValue "$ENV:OrganizationHKCU\shims" "initialized" -ErrorAction Ignore
+    $res = Get-RegistryValue (Get-ShimModuleRegistryPath) "initialized" -ErrorAction Ignore
     if($res -eq $null){ return $false }
     if($res -ne 1){ return $false }
     return $true;
@@ -231,13 +239,13 @@ function Initialize-ShimModule{
         $Path += '\'
     }
     try {
-        $null=New-Item "$ENV:OrganizationHKCU\shims" -Force
-        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shims_location" $Path "string"      
-        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" 'temp' "string"
-        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "initialized" 1 "DWORD"
+        $null=New-Item (Get-ShimModuleRegistryPath) -Force
+        $null=New-RegistryValue (Get-ShimModuleRegistryPath) "shims_location" $Path "string"      
+        $null=New-RegistryValue (Get-ShimModuleRegistryPath) "shimgen_exe_path" 'temp' "string"
+        $null=New-RegistryValue (Get-ShimModuleRegistryPath) "initialized" 1 "DWORD"
         $ShimGenPath = Get-ShimGenExePath 
 
-        $null=New-RegistryValue "$ENV:OrganizationHKCU\shims" "shimgen_exe_path" '$ShimGenPath' "string"
+        $null=New-RegistryValue (Get-ShimModuleRegistryPath) "shimgen_exe_path" '$ShimGenPath' "string"
 
         if($AddToPath){
           Write-Output "Setup: add to system path"
@@ -291,7 +299,7 @@ function Repair-AllShims{
           Write-Error "could not find shimgen.exe $ShimGenExe"
             return
         }
-        $RegBasePath = "$ENV:OrganizationHKCU\shims\"
+        $RegBasePath = (Get-ShimModuleRegistryPath)
      
         
         $AllShimEntries=(Get-Item "$RegBasePath\*").PSChildName
@@ -366,7 +374,7 @@ function Remove-AllShims{
           Write-Error "could not find shimgen.exe $ShimGenExe"
             return
         }
-        $RegBasePath = "$ENV:OrganizationHKCU\shims\"
+        $RegBasePath = (Get-ShimModuleRegistryPath)
      
         
         $AllShimEntries=(Get-Item "$RegBasePath\*").PSChildName
