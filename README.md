@@ -1,4 +1,8 @@
-## ⼕龱ᗪ㠪⼕闩丂ㄒ龱尺 ᗪ㠪ᐯ㠪㇄龱尸爪㠪𝓝ㄒ
+
+Shim Generator
+==============
+
+A readme and issues list for Shim Generator Module
 
 ## What ?
 
@@ -8,6 +12,27 @@ This also allows applications and tools to be on the "PATH" without cluttering u
 
 I actually change my PATH variable on the cmdline, made a booboo and lost the previous value. All my PATH entries were lost.
 Now, I only add the SHIM DIRECTORY in my path, and every program I want accessible, I create a shim.
+
+Shimgen is a tool that makes batch redirection not suck so much by generating shims that point to target executable files.
+
+* Provides an exe file that calls a target executable
+* The exe can be called from powershell, bash, cmd.exe, or other shells just like you would call the target.
+* Blocks and waits for command line apps to finish running, exits immediately when running a GUI app
+* Uses the icon of the target if the target exists on creation
+* Works better than symlinks. Symlinks on Windows fall down at file dependencies. So if your file depends on other files and DLLs, all of those need to also be linked.
+
+## Shim Arguments
+
+You pass these arguments to an executable that is a shim (e.g. executables in the bin directory of your choco install):
+
+ * `--shimgen-help` - shows this help menu and exits without running the target
+ * `--shimgen-log` - logging is shown on command line
+ * `--shimgen-waitforexit` - explicitly tell the shim to wait for target to exit - useful when something is calling a gui and wanting to block - command line programs explicitly have waitforexit already set.
+ * `--shimgen-exit` - explicitly tell the shim to exit immediately.
+ * `--shimgen-gui` - explicitly behave as if the target is a GUI application. This is helpful in situations where the package did not have a proper .gui file.
+ * `--shimgen-usetargetworkingdirectory` - set the working directory to the target path. Useful when programs need to be running from where they are located (usually indicates programs that have issues being run globally).
+ * `--shimgen-noop` - Do not actually call the target. Useful to see what would happen if you ran the command.
+
 
 ## Benefits
 
@@ -21,7 +46,6 @@ Blocks and waits for command line apps to finish running, exits immediately when
 Uses the icon of the target if the target exists on creation.
 Works better than symlinks. Symlinks on Windows fall down at file dependencies. So if your file depends on other files and DLLs, all of those need to also be linked.
 Does not require special privileges like creating symlinks (symbolic links) do. So you can create shims without administrative rights.
-
 
 ## Setup 
 
@@ -101,4 +125,7 @@ Repository
 ----------
 
 https://github.com/cybercastor/Cybercastor.PowerShell.Shim
+
+
+
 

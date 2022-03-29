@@ -416,6 +416,7 @@ function Remove-Shim{
     try{
         if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
 
+        $RegBasePath = (Get-ShimModuleRegistryPath)
         $DoneNoError = $True
         if($Name -ne ''){
             $ShimLocation=Get-ShimLocation
@@ -434,7 +435,7 @@ function Remove-Shim{
                 }
             }
             Write-Verbose "ShimFullPath $ShimFullPath"
-            $RegBasePath = "$ENV:OrganizationHKCU\shims\$Name"
+            $RegBasePath = "$RegBasePath\$Name"
             Remove-Item -Path $RegBasePath -Force -recurse -ErrorAction Ignore | Out-null
    
             Remove-Item -Path $ShimFullPath -Force -ErrorAction Stop | Out-null
@@ -486,6 +487,7 @@ function New-Shim{
 
     if ( -not (Get-IsShimInitialized) ) { throw 'not initialized'; return $false ;}
     $ShimGenExe=Get-ShimGenExePath
+    $RegBasePath = (Get-ShimModuleRegistryPath)
     Write-Verbose "ShimGenExePath $ShimGenExe"
     if(-not(Test-Path $ShimGenExe)){
         Write-Error 'could not find shimgen.exe'
@@ -524,8 +526,8 @@ function New-Shim{
 
         Write-ChannelMessage "Creating new shim"
 
-        $exists1=Test-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'target'
-        $exists2=Test-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'shim'
+        $exists1=Test-RegistryValue "$RegBasePath\$Name" 'target'
+        $exists2=Test-RegistryValue "$RegBasePath\$Name" 'shim'
         if($exists1 -or $exists2){
             Write-ChannelResult -Warning -Message "shim already exists, delete before adding. Use -Force or See Remove-Shim"
             throw 'shim already exists, delete before adding. See "Remove-Shim"'
@@ -560,8 +562,8 @@ function New-Shim{
 
 
         if($Res -eq $True){
-          $null=New-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'target' $Target "string"
-          $null=New-RegistryValue "$ENV:OrganizationHKCU\shims\$Name" 'shim'   $ShimFullPath "string"
+          $null=New-RegistryValue "$RegBasePath\$Name" 'target' $Target "string"
+          $null=New-RegistryValue "$RegBasePath\$Name" 'shim'   $ShimFullPath "string"
           Write-ChannelResult "Successfully created shim"
           Write-ChannelMessage "type '$Name' to run program."
           return $ShimFullPath
