@@ -1,8 +1,8 @@
+Shim Generator Module
+=====================
 
-Shim Generator
-==============
-
-A readme and issues list for Shim Generator Module
+A readme and issues list for Shim Generator Module (PowerShell.Module.Shim)
+https://github.com/arsscriptum/PowerShell.Module.Shim.git
 
 ## What ?
 
@@ -115,17 +115,15 @@ Run this to validate the scripts
 ## Tasks List
 -------------
 龱 Install cmd
-
+龱 Initialize Module
 龱 New-Shim
-
 龱 Repair all shims
-
+龱 Remove Shim
 
 Repository
 ----------
 
-https://github.com/cybercastor/Cybercastor.PowerShell.Shim
-
+https://github.com/arsscriptum/PowerShell.Module.Shim.git
 
 
 
