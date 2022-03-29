@@ -33,7 +33,6 @@ You pass these arguments to an executable that is a shim (e.g. executables in th
  * `--shimgen-usetargetworkingdirectory` - set the working directory to the target path. Useful when programs need to be running from where they are located (usually indicates programs that have issues being run globally).
  * `--shimgen-noop` - Do not actually call the target. Useful to see what would happen if you ran the command.
 
-
 ## Benefits
 
 These are the benefits of creating a shim:
