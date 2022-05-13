@@ -1,6 +1,6 @@
 ---
-external help file: CodeCastor.PowerShell.Shim-help.xml
-Module Name: CodeCastor.PowerShell.Shim
+external help file: PowerShell.Module.Shim-help.xml
+Module Name: PowerShell.Module.Shim
 online version:
 schema: 2.0.0
 ---

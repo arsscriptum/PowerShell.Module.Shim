@@ -168,7 +168,7 @@ function Get-ShimLocation{      # NOEXPORT
     # current location
     $ShimsPath=(Get-Location -EA Ignore).Path
     if(Test-Path $ShimsPath){
-        Write-ChannelResult "Get-ShimLocation: use current location. returns $ShimsPath" -Warning
+        Write-Log "Get-ShimLocation: use current location. returns $ShimsPath" -Warning
        if ($ShimsPath -notmatch '\\$'){
             $ShimsPath += '\'
         }
@@ -524,12 +524,12 @@ function New-Shim{
         $ShimFullPath = $ShimLocation + $Name
 
 
-        Write-ChannelMessage "Creating new shim"
+        Write-Log "Creating new shim"
 
         $exists1=Test-RegistryValue "$RegBasePath\$Name" 'target'
         $exists2=Test-RegistryValue "$RegBasePath\$Name" 'shim'
         if($exists1 -or $exists2){
-            Write-ChannelResult -Warning -Message "shim already exists, delete before adding. Use -Force or See Remove-Shim"
+            Write-Log  "shim already exists, delete before adding. Use -Force or See Remove-Shim"
             throw 'shim already exists, delete before adding. See "Remove-Shim"'
             return
         }
@@ -537,21 +537,21 @@ function New-Shim{
 
         $Res = Test-Path $ShimFullPath
         if($Res -eq $true){
-             Write-ChannelResult -Warning -Message "ALREADY EXISTS : $ShimFullPath"
+             Write-Log  "ALREADY EXISTS : $ShimFullPath"
              throw  "ALREADY EXISTS : $ShimFullPath"
              return $null
         }
-        Write-ChannelMessage "$ShimFullPath ==> $Target"
+        Write-Log "$ShimFullPath ==> $Target"
 
         $Res = Invoke-ShimGenProgram $ShimFullPath $Target
         if($Res -eq $False){
-             Write-ChannelResult -Warning -Message "FAILURE : Invoke-ShimGenProgram $ShimFullPath $Target"
+             Write-Log  "FAILURE : Invoke-ShimGenProgram $ShimFullPath $Target"
              throw "FAILURE : Invoke-ShimGenProgram $ShimFullPath $Target"
              return $null
         }
         $Res = Test-Path $ShimFullPath
         if($Res -eq $False){
-             Write-ChannelResult -Warning -Message "NOT FOUND : $ShimFullPath"
+             Write-Log  "NOT FOUND : $ShimFullPath"
              throw  "NOT FOUND : $ShimFullPath"
              return $null
         }
@@ -564,13 +564,13 @@ function New-Shim{
         if($Res -eq $True){
           $null=New-RegistryValue "$RegBasePath\$Name" 'target' $Target "string"
           $null=New-RegistryValue "$RegBasePath\$Name" 'shim'   $ShimFullPath "string"
-          Write-ChannelResult "Successfully created shim"
-          Write-ChannelMessage "type '$Name' to run program."
+          Write-Log "Successfully created shim"
+          Write-Log "type '$Name' to run program."
           return $ShimFullPath
         }
     }
     catch{
-        Show-ExceptionDetails($_) 
+        Show-ExceptionDetails($_) -ShowStack
     }
 }
 

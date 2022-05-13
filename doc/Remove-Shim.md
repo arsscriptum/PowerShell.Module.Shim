@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# New-Shim
+# Remove-Shim
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,7 +13,7 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-New-Shim [-Target] <Object> [[-Name] <Object>] [-Force] [-WhatIf] [-Confirm] [<CommonParameters>]
+Remove-Shim [-Name] <Object> [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -45,38 +45,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Force
-{{ Fill Force Description }}
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Name
 {{ Fill Name Description }}
-
-```yaml
-Type: Object
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Target
-{{ Fill Target Description }}
 
 ```yaml
 Type: Object

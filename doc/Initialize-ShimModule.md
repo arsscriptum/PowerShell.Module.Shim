@@ -5,7 +5,7 @@ online version:
 schema: 2.0.0
 ---
 
-# New-Shim
+# Initialize-ShimModule
 
 ## SYNOPSIS
 {{ Fill in the Synopsis }}
@@ -13,7 +13,8 @@ schema: 2.0.0
 ## SYNTAX
 
 ```
-New-Shim [-Target] <Object> [[-Name] <Object>] [-Force] [-WhatIf] [-Confirm] [<CommonParameters>]
+Initialize-ShimModule [-Path] <String> [[-ShimGenPath] <String>] [-AddToPath] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -30,6 +31,21 @@ PS C:\> {{ Add example code here }}
 
 ## PARAMETERS
 
+### -AddToPath
+{{ Fill AddToPath Description }}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
 
@@ -45,46 +61,31 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Force
-{{ Fill Force Description }}
+### -Path
+{{ Fill Path Description }}
 
 ```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Name
-{{ Fill Name Description }}
-
-```yaml
-Type: Object
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Target
-{{ Fill Target Description }}
-
-```yaml
-Type: Object
+Type: String
 Parameter Sets: (All)
 Aliases:
 
 Required: True
 Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ShimGenPath
+{{ Fill ShimGenPath Description }}
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
