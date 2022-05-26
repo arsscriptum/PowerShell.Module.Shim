@@ -186,6 +186,9 @@ function Get-IsShimInitialized{
     return $true;
 }
 
+function Initialize-ShimModuleWithDefault{
+    Initialize-ShimModule -Path "C:\Programs\Shims\" -ShimGenPath "C:\ProgramData\chocolatey\tools\shimgen.exe"
+}
 
 function Initialize-ShimModule{
 <#
