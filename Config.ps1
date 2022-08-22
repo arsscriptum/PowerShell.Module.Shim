@@ -11,7 +11,7 @@
 
 $ModuleDependencies = @( 'CodeCastor.PowerShell.Core' )
 $FunctionDependencies = @( 'Show-ExceptionDetails','Get-ScriptDirectory' )
-$EnvironmentVariable = @( 'OrganizationHKCU', 'OrganizationHKLM' )
+$EnvironmentVariable = @( 'OrganizationHKCU' )
 
 try{
     $ScriptMyInvocation = $Script:MyInvocation.MyCommand.Path
