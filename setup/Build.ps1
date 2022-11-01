@@ -44,16 +44,16 @@ function CompileExecutableFromScript{
 
     if($GUI){
         if($Out){
-            Invoke-ps2exe -inputFile $In -outputFile $Out -iconFile "$Icon"  -noConsole -noError -noOutput    
+            Invoke-CompilePS1 -inputFile $In -outputFile $Out -iconFile "$Icon"  -noConsole -noError -noOutput    
         }else{
-            Invoke-ps2exe -inputFile $In -iconFile "$Icon"  -noConsole -noError -noOutput    
+            Invoke-CompilePS1 -inputFile $In -iconFile "$Icon"  -noConsole -noError -noOutput    
         }
         
     }else{
         if($Out){
-            Invoke-ps2exe -inputFile $In -outputFile $Out -iconFile "$Icon" 
+            Invoke-CompilePS1 -inputFile $In -outputFile $Out -iconFile "$Icon" 
         }else{
-            Invoke-ps2exe -inputFile $In -iconFile "$Icon" 
+            Invoke-CompilePS1 -inputFile $In -iconFile "$Icon" 
         }
     }
 }
@@ -96,21 +96,21 @@ $ScriptList | ForEach-Object {
 
 try{
 
-    Write-ChannelMessage  "====================================="
-    Write-ChannelMessage  "Compile-Runner"
-    Write-ChannelMessage  "====================================="
-
-    Write-ChannelMessage  "RootPath $RootPath"
-    Write-ChannelMessage  "BinPath $BinPath"
-    Write-ChannelMessage  "ImgPath $ImgPath"
-    Write-ChannelMessage  "IconPath $IconPath"
-    Write-ChannelMessage  "RunnerPath $RunnerPath"
+    Write-Log  "====================================="
+    Write-Log  "Compile-Runner"
+    Write-Log  "====================================="
 
 
     $RootPath = (Resolve-Path "$PSScriptRoot\..").Path
     $BinPath = Join-Path $RootPath 'bin'
     $ImgPath = Join-Path $RootPath 'img'
     $SrcPath = Join-Path $PSScriptRoot 'src'
+
+    Write-Log  "RootPath $RootPath"
+    Write-Log  "BinPath $BinPath"
+    Write-Log  "ImgPath $ImgPath"
+    Write-Log  "SrcPath $SrcPath"
+    
 
     $Files=(gci $SrcPath -File -Filter '*.ps1')
     pushd $SrcPath
@@ -120,7 +120,8 @@ try{
         $base = $f.BaseName
         $icon = Join-Path $ImgPath $base
         $icon = $icon + '.ico'
-        CompileExecutableFromScript $full $icon
+        Write-Log  "CompileExecutableFromScript `"$full`" `"$icon`""
+        CompileExecutableFromScript "$full" "$icon"
         
     }
 

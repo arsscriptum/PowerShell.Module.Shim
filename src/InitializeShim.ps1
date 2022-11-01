@@ -97,7 +97,8 @@ function Initialize-ShimModule{
         Write-Host "ShimGen Path set to $ShimGenPath"  
         Write-Host -ForegroundColor DarkGreen "[OK] " -NoNewline
         Write-Host "Shims location set to $Path"  
-        #[Environment]::SetEnvironmentVariable("Path",[Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::User) + ";$Path",[EnvironmentVariableTarget]::User)
+
+        [Environment]::SetEnvironmentVariable("ShimsPath","$ShimLocation",[EnvironmentVariableTarget]::User)
     }
     catch{
         Show-ExceptionDetails($_) -ShowStack

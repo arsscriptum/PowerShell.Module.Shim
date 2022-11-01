@@ -46,37 +46,41 @@ function Install-ContextualMenu{
         New-Item 'HKCR:\exefile\shell\addshim' -EA Ignore -Force| Out-Null
         New-Item 'HKCR:\exefile\shell\delshim' -EA Ignore -Force| Out-Null
                         
-        Write-ChannelMessage  "====================================="
-        Write-ChannelMessage  "ContextualMenu Config"
-        Write-ChannelMessage  "====================================="
+        Write-Log  "====================================="
+        Write-Log  "ContextualMenu Config"
+        Write-Log  "====================================="
         $RegistryPath = 'HKCR:\exefile\shell\addshim\command'
         $RegistryPathDel = 'HKCR:\exefile\shell\delshim\command'
 
-        $RootPath = (Resolve-Path "$PSScriptRoot\..").Path
+        $RootPath = (Get-ShimModuleInformation).ModuleScriptPath
         $BinPath = Join-Path $RootPath 'bin'
-        $ImgPath = Join-Path $RootPath 'img'
+        $ImgPath = Join-Path $RootPath 'bin'
         $NewShimIconPath = Join-Path $ImgPath 'NewShim.ico'
         $RemoveShimIconPath = Join-Path $ImgPath 'RemoveShim.ico'
         $NewShimPath = Join-Path $BinPath 'NewShim.exe'
         $RemoveShimPath = Join-Path $BinPath 'RemoveShim.exe'
 
-        Write-ChannelMessage  "RootPath $RootPath"
-        Write-ChannelMessage  "BinPath $BinPath"
-        Write-ChannelMessage  "ImgPath $ImgPath"
-        Write-ChannelMessage  "NewShimIconPath $NewShimIconPath"
+        Write-Log  "RootPath $RootPath"
+        Write-Log  "BinPath $BinPath"
+        Write-Log  "ImgPath $ImgPath"
+        Write-Log  "NewShimIconPath $NewShimIconPath"
 
 
-        $NewShimCmd = '"' + $NewShimPath + '"'
-        $NewShimCmd += ' "%1"'
 
-        $RemoveShimCmd = '"' + $RemoveShimPath + '"'
-        $RemoveShimCmd += ' "%1"'
+        #$NewShimCmd = '"' + $NewShimPath + '"'
+        #$NewShimCmd += ' "%1"'
 
+        $NewShimCmd = "pwsh.exe -w Hidden -Command `"pwsh.exe`"  -Command {  import-module `"PowerShell.Module.Shim`" -Force ;  `$res = New-Shim `"%1`" ; explorer.exe `"`$((gi -Path `"`$res`").DirectoryName)`"  }"
+
+        #$RemoveShimCmd = '"' + $RemoveShimPath + '"'
+        #$RemoveShimCmd += ' "%1"'
+        $RemoveShimCmd = "pwsh.exe -w Hidden -Command `"pwsh.exe`"  -Command { import-module `"PowerShell.Module.Shim`" -Force ;  Remove-Shim `"`$((gi -Path `"%1`").Name)`"  }"
+        
         New-Item $RegistryPath -Force -Value "$NewShimCmd"
         New-Item $RegistryPathDel -Force -Value "$RemoveShimCmd"
-        Write-ChannelMessage  "NewShimCmd $NewShimCmd"
-        Write-ChannelMessage  "NewShimIconPath $NewShimIconPath"
-        Write-ChannelMessage  "RemoveShimPath $RemoveShimPath"
+        Write-Log  "NewShimCmd $NewShimCmd"
+        Write-Log  "NewShimIconPath $NewShimIconPath"
+        Write-Log  "RemoveShimPath $RemoveShimPath"
 
 
         New-ItemProperty 'HKCR:\exefile\shell\delshim' -Name 'Icon' -Value  "$RemoveShimIconPath" | Out-Null

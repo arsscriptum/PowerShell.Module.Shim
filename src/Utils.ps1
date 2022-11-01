@@ -76,7 +76,7 @@ function Invoke-ShimGenProgram{     # NOEXPORT
     $arguments = @()
     $arguments += $a1
     $arguments += $a2
-    $file=(New-TemporaryFile).Fullname
+    $file="$ENV:Temp\out.log"
     &"$ShimGenExePath" $arguments > $file
 
     return $?
@@ -140,7 +140,7 @@ function Invoke-ShimGenProgram{
     $arguments = @()
     $arguments += $a1
     $arguments += $a2
-    $file=(New-TemporaryFile).Fullname
+    $file="$ENV:Temp\out.log"
     &"$ShimGenExePath" $arguments > $file
      Write-Verbose "$ShimGenExePath $arguments"
     return $?
