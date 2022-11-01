@@ -4,6 +4,10 @@ Shim Generator Module
 A readme and issues list for Shim Generator Module (PowerShell.Module.Shim)
 https://github.com/arsscriptum/PowerShell.Module.Shim.git
 
+<img class="card-img-top-restricted-60"
+     src="https://arsscriptum.github.io/assets/img/posts/shimming/1.png"
+     alt="Contextual Menu" />
+
 
 
 The other day, I needed to run an executable I just downloaded but it was not in my PATH. So I quickly changed my ```PATH``` variable and made a mistake doing so, hence I needed to recreate my ```PATH``` variable and this was a pain!
@@ -443,7 +447,7 @@ There's a script that you can use to create contextual menu actions to Add a new
 ```
 
 <img class="card-img-top-restricted-60"
-     src="/assets/img/posts/shimming/2.png"
+     src="https://arsscriptum.github.io/assets/img/posts/shimming/2.png"
      alt="Contextual Menu" />
 
 
