@@ -1,6 +1,8 @@
 Shim Generator Module
 =====================
 
+https://arsscriptum.github.io/blog/powershell-shim/
+
 A readme and issues list for Shim Generator Module (PowerShell.Module.Shim)
 https://github.com/arsscriptum/PowerShell.Module.Shim.git
 
